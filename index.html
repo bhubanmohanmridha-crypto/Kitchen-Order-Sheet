@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Main Kitchen Order Sheet</title>
+<style>
+  :root {
+    --navy: #1f3a5f;
+    --cat: #cfdbe8;
+    --cat-edge: #9fb3c8;
+    --input-bg: #fffde9;
+    --line: #2b3a4a;
+    --grey: #eef1f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: #dfe4ea;
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    color: #111;
+  }
+  .sheet {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #fff;
+    border: 2px solid var(--navy);
+    padding: 14px 16px 18px;
+  }
+
+/* Toolbar (screen only) */
+.toolbar { max-width: 1200px; margin: 0 auto 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+.toolbar button, .add-cat {
+font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+background: #fff; border: 1px solid var(–navy); color: var(–navy); border-radius: 3px;
+}
+.toolbar button:hover, .add-cat:hover { background: var(–cat); }
+.toolbar .primary { background: var(–navy); color: #fff; }
+.toolbar .primary:hover { background: #16294a; }
+.hint { font-size: 12px; color: #455; align-self: center; }
+
+/* Header */
+h1 {
+margin: 0 0 10px; text-align: center; font-size: 26px; letter-spacing: 1px;
+color: #fff; background: var(–navy); padding: 8px 10px;
+}
+.head { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; border: 1px solid #2b3a4a; margin-bottom: 12px; }
+.field { display: flex; flex-direction: column; border-right: 1px solid #2b3a4a; }
+.field:last-child { border-right: 0; }
+.field label.cap { background: var(–cat); font-weight: 700; font-size: 12.5px; padding: 4px 8px; border-bottom: 1px solid #2b3a4a; }
+.field .val { background: var(–input-bg); min-height: 34px; display: flex; align-items: center; }
+.field input[type=text] {
+width: 100%; border: 0; background: transparent; font: inherit; font-weight: 600; padding: 6px 8px; outline: none;
+}
+.dt { position: relative; width: 100%; height: 100%; min-height: 34px; display: flex; align-items: center; padding: 6px 8px; cursor: pointer; font-weight: 600; }
+.dt .ph { color: #8a8a8a; font-weight: 400; }
+.dt input[type=date] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.field:focus-within .val, .dt:focus-within { outline: 2px solid var(–navy); outline-offset: -2px; }
+
+/* Two-column tables */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+table { width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; border: 2px solid #2b3a4a; }
+th, td { border: 1px solid #2b3a4a; padding: 0; height: 28px; }
+thead th {
+background: var(–navy); color: #fff; font-size: 12.5px; padding: 5px 4px; text-align: center;
+position: sticky; top: 0; z-index: 2;
+}
+th.name-h { text-align: left; padding-left: 8px; }
+col.c-sno { width: 46px; } col.c-qty { width: 82px; } col.c-ctl { width: 58px; }
+td.sno { text-align: center; font-weight: 700; background: var(–grey); font-size: 13px; }
+td.name { font-weight: 700; padding: 3px 8px; font-size: 13.5px; outline: none; }
+td.name:focus { background: #fff6c2; }
+td.qty { background: var(–input-bg); }
+td.qty input {
+width: 100%; height: 100%; border: 0; background: transparent; text-align: center;
+font: inherit; font-weight: 600; padding: 4px; outline: none; -moz-appearance: textfield;
+}
+td.qty input::-webkit-outer-spin-button, td.qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+td.qty:focus-within { outline: 2px solid var(–navy); outline-offset: -2px; background: #fff6c2; }
+tr.cat td.catcell { background: var(–cat); border-top: 2px solid var(–cat-edge); border-bottom: 2px solid var(–cat-edge); }
+tr.cat .name { font-size: 14px; color: var(–navy); text-transform: uppercase; letter-spacing: .4px; }
+td.ctl { border: 0; background: transparent; white-space: nowrap; padding-left: 4px; }
+td.ctl button {
+font-size: 12px; line-height: 1; width: 24px; height: 22px; cursor: pointer; border: 1px solid var(–cat-edge);
+background: #fff; color: var(–navy); border-radius: 3px;
+}
+td.ctl button:hover { background: var(–cat); }
+td.ctl button.del:hover { background: #f6c9c9; }
+.add-cat { margin-top: 8px; width: 100%; border-style: dashed; }
+
+/* Approval */
+.approval { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 26px; }
+.sign { border-top: 1px solid #2b3a4a; padding-top: 4px; }
+.sign .cap { font-weight: 700; font-size: 13px; }
+.sign input { width: 100%; border: 0; border-bottom: 1px dotted #999; background: var(–input-bg); font: inherit; padding: 4px; margin-top: 4px; outline: none; }
+.sign-space { height: 34px; }
+
+@media (max-width: 820px) {
+.cols { grid-template-columns: 1fr; }
+.head { grid-template-columns: 1fr; }
+.field { border-right: 0; border-bottom: 1px solid #2b3a4a; }
+.field:last-child { border-bottom: 0; }
+}
+
+/* Data bar (screen only) */
+.databar { max-width: 1200px; margin: 0 auto 10px; background: #fff; border: 1px solid var(–navy); border-radius: 3px; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-size: 13px; }
+.databar .grp { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.databar button { font: inherit; font-size: 13px; padding: 5px 10px; cursor: pointer; background: #fff; border: 1px solid var(–navy); color: var(–navy); border-radius: 3px; }
+.databar button:hover { background: var(–cat); }
+.databar button.primary { background: var(–navy); color: #fff; }
+.databar button.primary:hover { background: #16294a; }
+.databar select, .databar input[type=date], .databar input[type=month], .databar input[type=number] { font: inherit; font-size: 13px; padding: 4px; border: 1px solid var(–line); border-radius: 3px; }
+.databar input[type=number] { width: 72px; }
+.databar select { max-width: 280px; }
+.databar .status { color: #0b5a2a; font-weight: 600; }
+.idval { background: var(–grey) !important; padding: 6px 8px; font-weight: 700; font-size: 13.5px; }
+.idval .unsaved { color: #8a5a00; font-weight: 600; font-size: 12px; }
+.idval .saved { color: var(–navy); }
+
+/* Print: A4 landscape */
+@page { size: A4 landscape; margin: 7mm; }
+@media print {
+body { background: #fff; padding: 0; }
+.toolbar, .databar, td.ctl, th.ctl-h, col.c-ctl, .add-cat { display: none !important; }
+.sheet { border: 0; padding: 0; max-width: none; }
+h1 { font-size: 18px; padding: 4px; margin-bottom: 6px; }
+.cols { grid-template-columns: 1fr 1fr; gap: 8mm; }
+.head { grid-template-columns: 1.3fr 1fr 1fr 1fr; margin-bottom: 6px; }
+th, td { height: 17px; }
+td.name { font-size: 10.5px; padding: 1px 5px; }
+td.sno, thead th { font-size: 10px; }
+td.qty input { font-size: 10.5px; padding: 1px; }
+.field .val, .dt { min-height: 24px; }
+.approval { margin-top: 12px; }
+tr { break-inside: avoid; }
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.dt input[type=date] { display: none; }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="primary" onclick="window.print()">Print (A4 landscape)</button>
+  <button onclick="clearQty()">Clear all quantities</button>
+  <button onclick="resetSheet()">Reset to default items</button>
+  <span class="hint">Click any item or category name to rename it. Yellow cells are inputs. Use + to insert a row, × to delete.</span>
+</div>
+
+<div class="databar">
+  <div class="grp">
+    <button class="primary" id="btnSave">Save order</button>
+    <button id="btnNew">New order</button>
+    <span id="status" class="status" role="status" aria-live="polite"></span>
+  </div>
+  <div class="grp">
+    <label>Saved orders <select id="savedSel"></select></label>
+    <button id="btnOpen">Open</button>
+    <button id="btnDelete">Delete</button>
+  </div>
+  <div class="grp">
+    <strong>Export to Excel</strong>
+    <label>Day <input type="date" id="expDay"></label><button id="btnDay">Day-wise</button>
+    <label>Month <input type="month" id="expMonth" placeholder="YYYY-MM"></label><button id="btnMonth">Month-wise</button>
+    <label>Year <input type="number" id="expYear" min="2000" max="2100"></label><button id="btnYear">Year-wise</button>
+  </div>
+  <div class="grp">
+    <button id="btnBackup">Backup data</button>
+    <button id="btnRestore">Restore data</button>
+    <input type="file" id="fileRestore" accept="application/json,.json" hidden>
+  </div>
+</div>
+
+<div class="sheet">
+  <h1>MAIN KITCHEN ORDER SHEET</h1>
+
+  <div class="head">
+    <div class="field">
+      <label class="cap">ORDER SHEET ID</label>
+      <div class="val idval"><span id="orderId"></span></div>
+    </div>
+    <div class="field">
+      <label class="cap">DATE OF REQUISITION</label>
+      <div class="val">
+        <label class="dt" id="reqWrap"><span id="reqText"></span><input type="date" id="reqDate" aria-label="Date of requisition"></label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="cap">LATEST TO DELIVERY</label>
+      <div class="val">
+        <label class="dt" id="delWrap"><span id="delText"></span><input type="date" id="delDate" aria-label="Latest to delivery"></label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="cap" for="raisedBy">RAISED BY</label>
+      <div class="val">
+        <input type="text" id="raisedBy" list="raisedList" placeholder="Select or type a name" autocomplete="off">
+        <datalist id="raisedList"></datalist>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <table id="tblLeft" border="1" cellspacing="0" cellpadding="0">
+        <colgroup><col class="c-sno"><col><col class="c-qty"><col class="c-qty"><col class="c-ctl"></colgroup>
+        <thead><tr><th>S.No</th><th class="name-h">Vegetables</th><th>Qty in Hand</th><th>Qty Req.</th><th class="ctl-h"></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="add-cat" data-side="left">+ Add category / department</button>
+    </div>
+    <div>
+      <table id="tblRight" border="1" cellspacing="0" cellpadding="0">
+        <colgroup><col class="c-sno"><col><col class="c-qty"><col class="c-qty"><col class="c-ctl"></colgroup>
+        <thead><tr><th>S.No</th><th class="name-h">English Vegetables</th><th>Qty in Hand</th><th>Qty Req.</th><th class="ctl-h"></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="add-cat" data-side="right">+ Add category / department</button>
+    </div>
+  </div>
+
+  <div class="approval">
+    <div class="sign"><div class="sign-space"></div><div class="cap">Approved By</div><input type="text" id="approvedBy" placeholder="Name / signature"></div>
+    <div class="sign"><div class="sign-space"></div><div class="cap">Executive Chef</div><input type="text" id="execChef" placeholder="Name / signature"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var DRAFT_KEY = 'mainKitchenOrderSheet.v1';
+  var ORDER_PREFIX = 'mainKitchenOrderSheet.order.';   // one localStorage key per saved order
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Starter content. Every name is editable on the page, so replace with your exact list.
+  var DEFAULTS = {
+    left: [
+      ['c', 'Vegetables'], ['i', 'Onion'], ['i', 'Potato'], ['i', 'Tomato'], ['i', 'Carrot'], ['i', 'Cabbage'], ['i', 'Cauliflower'], ['i', 'Capsicum'], ['i', 'Beans'],
+      ['c', 'Herbs'], ['i', 'Coriander'], ['i', 'Mint'], ['i', 'Curry Leaves'], ['i', 'Basil'],
+      ['c', 'Fruits'], ['i', 'Banana'], ['i', 'Lemon'], ['i', 'Papaya'], ['i', 'Pineapple'],
+      ['c', 'Frozen'], ['i', 'Green Peas'], ['i', 'Sweet Corn'], ['i', 'French Fries'],
+      ['c', 'Dairy Products'], ['i', 'Milk'], ['i', 'Curd'], ['i', 'Butter'], ['i', 'Paneer'],
+      ['c', 'Frozen Non Veg'], ['i', 'Prawns'], ['i', 'Fish Fillet'], ['i', 'Mutton'],
+      ['c', 'Fuel'], ['i', 'LPG Cylinder'], ['i', 'Diesel']
+    ],
+    right: [
+      ['c', 'English Vegetables'], ['i', 'Broccoli'], ['i', 'Zucchini'], ['i', 'Lettuce'], ['i', 'Celery'], ['i', 'Mushroom'],
+      ['c', 'Chinese'], ['i', 'Bok Choy'], ['i', 'Spring Onion'], ['i', 'Baby Corn'],
+      ['c', 'Highly Perishable NV'], ['i', 'Chicken'], ['i', 'Eggs'], ['i', 'Fresh Fish'],
+      ['c', 'Cheese'], ['i', 'Mozzarella'], ['i', 'Cheddar'], ['i', 'Processed Cheese'],
+      ['c', 'Required Date'], ['i', ''],
+      ['c', 'Staff Cafeteria'], ['i', 'Rice'], ['i', 'Dal'], ['i', 'Vegetables (Staff)']
+    ]
+  };
+
+  var orders = loadOrders();            // { id: orderObject }
+  var state = loadDraft() || fresh();
+
+  function fresh() {
+    function conv(list) {
+      return list.map(function (r) {
+        return r[0] === 'c' ? { t: 'c', n: r[1] } : { t: 'i', n: r[1], h: '', r: '' };
+      });
+    }
+    return {
+      left: conv(DEFAULTS.left),
+      right: conv(DEFAULTS.right),
+      raisedBy: '', delDate: '', approvedBy: '', execChef: '', currentId: null,
+      names: ['Executive Chef', 'Sous Chef', 'Kitchen Supervisor', 'Store Keeper']
+    };
+  }
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+
+  // ---------- Storage ----------
+  function loadDraft() {
+    try { var s = localStorage.getItem(DRAFT_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+  }
+  function saveDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) { msg('Browser storage is full. Use Backup data, then delete old orders.'); }
+  }
+  function loadOrders() {
+    var out = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(ORDER_PREFIX) === 0) {
+          var o = JSON.parse(localStorage.getItem(k));
+          if (o && o.id && o.date) out[o.id] = o;
+        }
+      }
+    } catch (e) {}
+    return out;
+  }
+  function writeOrder(o) {
+    try { localStorage.setItem(ORDER_PREFIX + o.id, JSON.stringify(o)); return true; }
+    catch (e) { msg('Browser storage is full. Use Backup data, then delete old orders.'); return false; }
+  }
+
+  var statusEl = document.getElementById('status'), statusTimer;
+  function msg(t) {
+    statusEl.textContent = t;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () { statusEl.textContent = ''; }, 7000);
+  }
+
+  // ---------- Dates ----------
+  function iso(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function fmt(v) {
+    if (!v) return '';
+    var p = v.split('-');
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+  function today() { return iso(new Date()); }
+
+  var reqDate = document.getElementById('reqDate'),
+      reqText = document.getElementById('reqText'),
+      delDate = document.getElementById('delDate'),
+      delText = document.getElementById('delText'),
+      idText = document.getElementById('orderId');
+
+  function showDate(input, span) {
+    if (input.value) { span.textContent = fmt(input.value); span.className = ''; }
+    else { span.textContent = 'DD/MM/YYYY'; span.className = 'ph'; }
+  }
+  function openPicker(input) { try { if (input.showPicker) input.showPicker(); } catch (e) {} }
+
+  // ---------- Order Sheet ID ----------
+  function nextId(date) {
+    var prefix = 'MKO-' + (date || today()).replace(/-/g, '') + '-', max = 0;
+    Object.keys(orders).forEach(function (id) {
+      if (id.indexOf(prefix) === 0) { var n = parseInt(id.slice(prefix.length), 10); if (n > max) max = n; }
+    });
+    return prefix + String(max + 1).padStart(3, '0');
+  }
+  function updateId() {
+    if (state.currentId) { idText.textContent = state.currentId; idText.className = 'saved'; }
+    else { idText.textContent = nextId(reqDate.value) + '  (not saved yet)'; idText.className = 'unsaved'; }
+  }
+
+  function snapshot() {
+    return {
+      id: state.currentId, date: reqDate.value, delivery: state.delDate || '',
+      raisedBy: state.raisedBy || '', approvedBy: state.approvedBy || '', execChef: state.execChef || '',
+      left: clone(state.left), right: clone(state.right), savedAt: new Date().toISOString()
+    };
+  }
+  // Called after every edit: keeps the draft and, once saved, the order record up to date.
+  function persist() {
+    saveDraft();
+    if (state.currentId) { orders[state.currentId] = snapshot(); writeOrder(orders[state.currentId]); }
+  }
+
+  function hasQty() {
+    return ['left', 'right'].some(function (s) { return state[s].some(function (r) { return r.t === 'i' && (r.h !== '' || r.r !== ''); }); });
+  }
+  function blankQty() {
+    ['left', 'right'].forEach(function (s) { state[s].forEach(function (r) { if (r.t === 'i') { r.h = ''; r.r = ''; } }); });
+  }
+
+  // ---------- Start-up: requisition date is today; a new day starts a new order ----------
+  reqDate.value = today();
+  if (state.currentId) {
+    var cur = orders[state.currentId];
+    if (!cur) { state.currentId = null; }
+    else if (cur.date !== today()) {
+      state.currentId = null; blankQty(); state.delDate = ''; state.approvedBy = ''; state.execChef = '';
+    }
+  }
+  showDate(reqDate, reqText);
+  reqDate.addEventListener('change', function () {
+    if (!reqDate.value) reqDate.value = today();
+    showDate(reqDate, reqText); updateId(); persist();
+  });
+  reqDate.addEventListener('click', function () { openPicker(reqDate); });
+
+  delDate.value = state.delDate || '';
+  showDate(delDate, delText);
+  delDate.addEventListener('change', function () { state.delDate = delDate.value; showDate(delDate, delText); persist(); });
+  delDate.addEventListener('click', function () { openPicker(delDate); });
+
+  // ---------- Raised By / approval ----------
+  var raised = document.getElementById('raisedBy'), list = document.getElementById('raisedList');
+  function fillNames() {
+    list.innerHTML = '';
+    (state.names || []).forEach(function (n) {
+      var o = document.createElement('option'); o.value = n; list.appendChild(o);
+    });
+  }
+  fillNames();
+  raised.value = state.raisedBy || '';
+  raised.addEventListener('input', function () { state.raisedBy = raised.value; persist(); });
+  raised.addEventListener('change', function () {
+    var v = raised.value.trim();
+    if (v && state.names.indexOf(v) === -1) { state.names.push(v); fillNames(); }
+    persist();
+  });
+  ['approvedBy', 'execChef'].forEach(function (id) {
+    var el = document.getElementById(id);
+    el.value = state[id] || '';
+    el.addEventListener('input', function () { state[id] = el.value; persist(); });
+  });
+
+  // ---------- Tables ----------
+  function render(side) {
+    var tbody = document.querySelector(side === 'left' ? '#tblLeft tbody' : '#tblRight tbody');
+    tbody.innerHTML = '';
+    var n = 0;
+    state[side].forEach(function (row, idx) {
+      var tr = document.createElement('tr');
+      tr.dataset.i = idx;
+      if (row.t === 'c') {
+        tr.className = 'cat';
+        tr.innerHTML = '<td class="catcell" colspan="4"><div class="name" contenteditable="true" spellcheck="false" data-f="n"></div></td>' +
+          '<td class="ctl"><button title="Add item under this category" data-act="ins">+</button><button class="del" title="Delete category row" data-act="del">×</button></td>';
+        tr.querySelector('.name').textContent = row.n;
+      } else {
+        n++;
+        tr.innerHTML = '<td class="sno">' + n + '</td>' +
+          '<td class="name" contenteditable="true" spellcheck="false" data-f="n"></td>' +
+          '<td class="qty"><input type="number" min="0" step="any" inputmode="decimal" data-f="h" aria-label="Qty in hand"></td>' +
+          '<td class="qty"><input type="number" min="0" step="any" inputmode="decimal" data-f="r" aria-label="Qty required"></td>' +
+          '<td class="ctl"><button title="Insert row below" data-act="ins">+</button><button class="del" title="Delete row" data-act="del">×</button></td>';
+        tr.querySelector('.name').textContent = row.n;
+        tr.querySelector('[data-f=h]').value = row.h;
+        tr.querySelector('[data-f=r]').value = row.r;
+      }
+      tbody.appendChild(tr);
+    });
+  }
+
+  function wire(tableId, side) {
+    var tbody = document.querySelector('#' + tableId + ' tbody');
+
+    tbody.addEventListener('input', function (e) {
+      var tr = e.target.closest('tr'); if (!tr) return;
+      var row = state[side][+tr.dataset.i], f = e.target.dataset.f; if (!row || !f) return;
+      if (f === 'n') row[f] = e.target.textContent;
+      else {
+        if (e.target.value !== '' && (isNaN(parseFloat(e.target.value)) || parseFloat(e.target.value) < 0)) e.target.value = '';
+        row[f] = e.target.value;
+      }
+      persist();
+    });
+
+    tbody.addEventListener('keydown', function (e) {
+      if (e.target.isContentEditable && e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+      if (e.target.tagName === 'INPUT' && e.key === 'Enter') {
+        var inputs = Array.prototype.slice.call(document.querySelectorAll('#' + tableId + ' td.qty input'));
+        var nx = inputs[inputs.indexOf(e.target) + 1]; if (nx) nx.focus();
+      }
+    });
+
+    tbody.addEventListener('paste', function (e) {
+      if (e.target.isContentEditable) {
+        e.preventDefault();
+        var t = (e.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' ');
+        document.execCommand('insertText', false, t);
+      }
+    });
+
+    tbody.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-act]'); if (!b) return;
+      var idx = +b.closest('tr').dataset.i;
+      if (b.dataset.act === 'ins') {
+        state[side].splice(idx + 1, 0, { t: 'i', n: '', h: '', r: '' });
+        render(side); persist();
+        var rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+        var nameEl = rows[idx + 1] && rows[idx + 1].querySelector('.name'); if (nameEl) nameEl.focus();
+      } else if (b.dataset.act === 'del') {
+        if (state[side].length > 1) { state[side].splice(idx, 1); render(side); persist(); }
+      }
+    });
+  }
+  wire('tblLeft', 'left');
+  wire('tblRight', 'right');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.add-cat'), function (btn) {
+    btn.addEventListener('click', function () {
+      var side = btn.dataset.side;
+      state[side].push({ t: 'c', n: 'New Category' }, { t: 'i', n: '', h: '', r: '' });
+      render(side); persist();
+      var rows = document.querySelectorAll((side === 'left' ? '#tblLeft' : '#tblRight') + ' tbody tr');
+      var el = rows[rows.length - 2].querySelector('.name');
+      el.focus(); document.execCommand('selectAll', false, null);
+    });
+  });
+
+  function renderAll() {
+    render('left'); render('right');
+    reqText && showDate(reqDate, reqText);
+    delDate.value = state.delDate || ''; showDate(delDate, delText);
+    raised.value = state.raisedBy || '';
+    document.getElementById('approvedBy').value = state.approvedBy || '';
+    document.getElementById('execChef').value = state.execChef || '';
+    updateId(); refreshSaved();
+  }
+
+  // ---------- Toolbar actions ----------
+  window.clearQty = function () {
+    if (state.currentId && !confirm('This order is saved. Clearing will also erase its saved quantities. Continue?')) return;
+    blankQty(); render('left'); render('right'); persist();
+  };
+  window.resetSheet = function () {
+    if (!confirm('Reset the sheet to the default items? The current items on screen will be replaced. Saved orders are not deleted.')) return;
+    var keep = state.names;
+    state = fresh(); state.names = keep;
+    reqDate.value = today(); renderAll(); saveDraft();
+  };
+
+  document.getElementById('btnSave').addEventListener('click', function () {
+    var isNew = !state.currentId;
+    if (isNew) state.currentId = nextId(reqDate.value);
+    orders[state.currentId] = snapshot();
+    if (writeOrder(orders[state.currentId])) {
+      saveDraft(); updateId(); refreshSaved();
+      msg((isNew ? 'Saved as ' : 'Updated ') + state.currentId);
+    }
+  });
+
+  document.getElementById('btnNew').addEventListener('click', function () {
+    if (!state.currentId && hasQty() && !confirm('The current sheet has quantities that were not saved. Start a new order anyway?')) return;
+    state.currentId = null; blankQty();
+    state.delDate = ''; state.approvedBy = ''; state.execChef = '';
+    reqDate.value = today();
+    renderAll(); saveDraft();
+    msg('New order started.');
+  });
+
+  var savedSel = document.getElementById('savedSel');
+  function refreshSaved() {
+    var ids = Object.keys(orders).sort(function (a, b) {
+      var oa = orders[a], ob = orders[b];
+      return oa.date === ob.date ? (a < b ? 1 : -1) : (oa.date < ob.date ? 1 : -1);
+    });
+    savedSel.innerHTML = '';
+    if (!ids.length) {
+      var o0 = document.createElement('option'); o0.value = ''; o0.textContent = 'No saved orders yet'; savedSel.appendChild(o0);
+      return;
+    }
+    ids.forEach(function (id) {
+      var o = document.createElement('option');
+      o.value = id;
+      o.textContent = id + '  |  ' + fmt(orders[id].date) + (orders[id].raisedBy ? '  |  ' + orders[id].raisedBy : '');
+      savedSel.appendChild(o);
+    });
+    if (state.currentId && orders[state.currentId]) savedSel.value = state.currentId;
+  }
+
+  document.getElementById('btnOpen').addEventListener('click', function () {
+    var id = savedSel.value, o = orders[id]; if (!o) return;
+    if (!state.currentId && hasQty() && !confirm('The current sheet has quantities that were not saved. Replace it?')) return;
+    state.left = clone(o.left); state.right = clone(o.right);
+    state.delDate = o.delivery || ''; state.raisedBy = o.raisedBy || '';
+    state.approvedBy = o.approvedBy || ''; state.execChef = o.execChef || '';
+    state.currentId = o.id;
+    reqDate.value = o.date;
+    renderAll(); saveDraft();
+    msg('Opened ' + o.id);
+  });
+
+  document.getElementById('btnDelete').addEventListener('click', function () {
+    var id = savedSel.value; if (!orders[id]) return;
+    if (!confirm('Delete saved order ' + id + ' permanently? Export or back up first if you need it.')) return;
+    delete orders[id];
+    try { localStorage.removeItem(ORDER_PREFIX + id); } catch (e) {}
+    if (state.currentId === id) state.currentId = null;
+    updateId(); refreshSaved(); saveDraft();
+    msg('Deleted ' + id);
+  });
+
+  // ---------- Excel export ----------
+  function sortedOrders(filterFn) {
+    return Object.keys(orders).map(function (k) { return orders[k]; }).filter(filterFn)
+      .sort(function (a, b) { return a.date === b.date ? (a.id < b.id ? -1 : 1) : (a.date < b.date ? -1 : 1); });
+  }
+
+  // One row per item that has a quantity entered.
+  function flatten(list) {
+    var out = [];
+    list.forEach(function (o) {
+      ['left', 'right'].forEach(function (side) {
+        var cat = '', n = 0;
+        (o[side] || []).forEach(function (r) {
+          if (r.t === 'c') { cat = r.n; return; }
+          n++;
+          if (!r.n || !r.n.trim()) return;
+          var h = parseFloat(r.h), q = parseFloat(r.r);
+          if (isNaN(h) && isNaN(q)) return;
+          out.push({
+            id: o.id, date: o.date, delivery: o.delivery || '', by: o.raisedBy || '',
+            cat: cat, sno: n, item: r.n.trim(), hand: isNaN(h) ? '' : h, req: isNaN(q) ? '' : q
+          });
+        });
+      });
+    });
+    return out;
+  }
+
+  function detailAOA(rows) {
+    var a = [['Order Sheet ID', 'Date of Requisition', 'Latest to Delivery', 'Raised By', 'Category', 'S.No', 'Item', 'Qty in Hand', 'Qty Req.']];
+    rows.forEach(function (r) { a.push([r.id, fmt(r.date), fmt(r.delivery), r.by, r.cat, r.sno, r.item, r.hand, r.req]); });
+    return a;
+  }
+
+  function summaryAOA(rows) {
+    var map = {}, order = [];
+    rows.forEach(function (r) {
+      var k = r.cat + '||' + r.item;
+      if (!map[k]) { map[k] = { cat: r.cat, item: r.item, total: 0, count: 0 }; order.push(k); }
+      if (r.req !== '') { map[k].total += r.req; map[k].count++; }
+    });
+    var a = [['Category', 'Item', 'Total Qty Req.', 'No. of Orders', 'Average Qty Req.']];
+    order.forEach(function (k) {
+      var m = map[k];
+      a.push([m.cat, m.item, m.total, m.count, m.count ? Math.round(m.total / m.count * 100) / 100 : '']);
+    });
+    return a;
+  }
+
+  // Item x period matrix of Qty Req.
+  function matrixAOA(rows, labels, indexFn) {
+    var map = {}, order = [];
+    rows.forEach(function (r) {
+      if (r.req === '') return;
+      var k = r.cat + '||' + r.item;
+      if (!map[k]) { map[k] = { cat: r.cat, item: r.item, v: labels.map(function () { return ''; }), total: 0 }; order.push(k); }
+      var i = indexFn(r);
+      map[k].v[i] = (map[k].v[i] === '' ? 0 : map[k].v[i]) + r.req;
+      map[k].total += r.req;
+    });
+    var a = [['Category', 'Item'].concat(labels, ['Total'])];
+    order.forEach(function (k) { var m = map[k]; a.push([m.cat, m.item].concat(m.v, [m.total])); });
+    return a;
+  }
+
+  function csvEscape(v) {
+    v = (v === undefined || v === null) ? '' : String(v);
+    return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function download(blob, name) {
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 500);
+  }
+
+  // sheets: [[name, aoa, columnWidths]]
+  function makeBook(sheets, filename) {
+    if (window.XLSX) {
+      var wb = XLSX.utils.book_new();
+      sheets.forEach(function (s) {
+        var ws = XLSX.utils.aoa_to_sheet(s[1]);
+        ws['!cols'] = (s[2] || []).map(function (w) { return { wch: w }; });
+        XLSX.utils.book_append_sheet(wb, ws, s[0].slice(0, 31));
+      });
+      XLSX.writeFile(wb, filename);
+      msg('Exported ' + filename);
+    } else {
+      var csv = sheets.map(function (s) {
+        return s[0] + '\n' + s[1].map(function (r) { return r.map(csvEscape).join(','); }).join('\n');
+      }).join('\n\n');
+      download(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }), filename.replace(/\.xlsx$/, '.csv'));
+      msg('Excel library could not load (offline?), so a CSV file was downloaded instead.');
+    }
+  }
+
+  var dayIn = document.getElementById('expDay'), monthIn = document.getElementById('expMonth'), yearIn = document.getElementById('expYear');
+  dayIn.value = today();
+  monthIn.value = today().slice(0, 7);
+  yearIn.value = today().slice(0, 4);
+
+  document.getElementById('btnDay').addEventListener('click', function () {
+    var d = dayIn.value; if (!d) { msg('Choose a date to export.'); return; }
+    var list = sortedOrders(function (o) { return o.date === d; });
+    if (!list.length) { msg('No saved orders for ' + fmt(d) + '. Save the order first.'); return; }
+    var rows = flatten(list);
+    if (!rows.length) { msg('Orders for ' + fmt(d) + ' have no quantities entered.'); return; }
+    makeBook([
+      ['Day Entries', detailAOA(rows), [18, 18, 18, 18, 22, 7, 26, 12, 12]],
+      ['Day Summary', summaryAOA(rows), [22, 26, 15, 14, 16]]
+    ], 'Kitchen_Orders_Day_' + d + '.xlsx');
+  });
+
+  document.getElementById('btnMonth').addEventListener('click', function () {
+    var m = (monthIn.value || '').trim();
+    if (!/^\d{4}-\d{2}$/.test(m)) { msg('Choose a month (format YYYY-MM).'); return; }
+    var list = sortedOrders(function (o) { return o.date.slice(0, 7) === m; });
+    var rows = flatten(list);
+    if (!rows.length) { msg('No saved quantities for ' + m + '.'); return; }
+    var days = new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate(), labels = [];
+    for (var i = 1; i <= days; i++) labels.push(String(i));
+    makeBook([
+      ['Daily Entries', detailAOA(rows), [18, 18, 18, 18, 22, 7, 26, 12, 12]],
+      ['Day-wise Qty Req', matrixAOA(rows, labels, function (r) { return parseInt(r.date.slice(8), 10) - 1; }), [22, 26]],
+      ['Month Summary', summaryAOA(rows), [22, 26, 15, 14, 16]]
+    ], 'Kitchen_Orders_Month_' + m + '.xlsx');
+  });
+
+  document.getElementById('btnYear').addEventListener('click', function () {
+    var y = String(yearIn.value || '').trim();
+    if (!/^\d{4}$/.test(y)) { msg('Enter a four-digit year.'); return; }
+    var list = sortedOrders(function (o) { return o.date.slice(0, 4) === y; });
+    var rows = flatten(list);
+    if (!rows.length) { msg('No saved quantities for ' + y + '.'); return; }
+    makeBook([
+      ['Month-wise Qty Req', matrixAOA(rows, MONTHS, function (r) { return parseInt(r.date.slice(5, 7), 10) - 1; }), [22, 26]],
+      ['Year Summary', summaryAOA(rows), [22, 26, 15, 14, 16]],
+      ['All Entries', detailAOA(rows), [18, 18, 18, 18, 22, 7, 26, 12, 12]]
+    ], 'Kitchen_Orders_Year_' + y + '.xlsx');
+  });
+
+  // ---------- Backup / restore ----------
+  document.getElementById('btnBackup').addEventListener('click', function () {
+    var data = { app: 'main-kitchen-order-sheet', version: 1, exportedAt: new Date().toISOString(), orders: orders };
+    download(new Blob([JSON.stringify(data)], { type: 'application/json' }), 'kitchen-order-backup-' + today() + '.json');
+    msg('Backup downloaded (' + Object.keys(orders).length + ' orders).');
+  });
+  var fileRestore = document.getElementById('fileRestore');
+  document.getElementById('btnRestore').addEventListener('click', function () { fileRestore.click(); });
+  fileRestore.addEventListener('change', function () {
+    var f = fileRestore.files[0]; if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result), src = data.orders || {}, n = 0;
+        (Array.isArray(src) ? src : Object.keys(src).map(function (k) { return src[k]; })).forEach(function (o) {
+          if (o && o.id && o.date && o.left && o.right) { orders[o.id] = o; writeOrder(o); n++; }
+        });
+        refreshSaved(); updateId();
+        msg('Restored ' + n + ' order' + (n === 1 ? '' : 's') + ' from backup.');
+      } catch (e) { msg('That file is not a valid backup.'); }
+      fileRestore.value = '';
+    };
+    reader.readAsText(f);
+  });
+
+  renderAll();
+  saveDraft();
+})();
+</script>
+
+</body>
+</html>
